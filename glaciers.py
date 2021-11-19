@@ -1,5 +1,4 @@
 import csv
-import os
 from datetime import datetime
 from pathlib import Path
 from matplotlib import pyplot as plt
@@ -212,7 +211,40 @@ class GlacierCollection:
         print(f"{percent_shrunk}% of glaciers shrunk in their last measurement.")
 
     def plot_extremes(self, output_path):
-        raise NotImplementedError
+        # retrieve growth extreme data
+        grow_extreme = self.sort_by_latest_mass_balance(n=1)
+        grow_extreme_glacier = grow_extreme[0]
+
+        growth = grow_extreme_glacier.mass_balances[max(grow_extreme_glacier.mass_balances.keys())]
+        assert growth > 0, "No glacier grew in latest measurements"
+
+        # plot growth extreme
+        x_vals_grow = grow_extreme_glacier.mass_balances.keys()
+        y_vals_grow = grow_extreme_glacier.mass_balances.values()
+
+        plot, plot_axes = plt.subplots()
+        plot_axes.plot(x_vals_grow, y_vals_grow, label=grow_extreme_glacier.name)
+
+        # retrieve shrinking extreme data
+        shrunk_extreme = self.sort_by_latest_mass_balance(n=1, reverse=True)
+        shrunk_extreme_glacier = shrunk_extreme[0]
+
+        shrinkage = shrunk_extreme_glacier.mass_balances[max(shrunk_extreme_glacier.mass_balances.keys())]
+        assert shrinkage < 0, "No glacier shrunk in latest measurements"
+
+        # plot shrinking extreme
+        x_vals_shrunk = shrunk_extreme_glacier.mass_balances.keys()
+        y_vals_shrunk = shrunk_extreme_glacier.mass_balances.values()
+
+        plot_axes.plot(x_vals_shrunk, y_vals_shrunk, label=shrunk_extreme_glacier.name)
+
+        # add detail to plot
+        plot_axes.set_title("Net mass-balance per year for extreme glaciers of collection")
+        plot_axes.set_xlabel("Year")
+        plot_axes.set_ylabel("Mass-balance")
+        plot_axes.legend()
+        plot.tight_layout()
+        plot.savefig(output_path)
 
 
 # Test
