@@ -1,5 +1,6 @@
 import csv
 from pathlib import Path
+from utils import haversine_distance
 
 
 class Glacier:
@@ -93,13 +94,53 @@ class GlacierCollection:
             if mass_balance != '':
                 self.glaciers[gid].add_mass_balance_measurement(int(year), float(mass_balance), is_partial)
 
-    def find_nearest(self, lat, lon, n):
+    def find_nearest(self, lat, lon, n=5):
         """Get the n glaciers closest to the given coordinates."""
-        raise NotImplementedError
+        nearest = {}
+
+        for k, v in self.glaciers.items():
+            lat2, lon2 = v.coordinates
+            dist = haversine_distance(lat, lon, lat2, lon2)
+
+            if len(nearest.keys()) < n:
+                nearest.update({v.name: dist})
+            elif dist < max(nearest.values()):
+                maxi = max(nearest, key=nearest.get)
+                nearest.pop(maxi)
+                nearest.update({v.name: dist})
+
+        return list(nearest.keys())
+
     
     def filter_by_code(self, code_pattern):
         """Return the names of glaciers whose codes match the given pattern."""
-        raise NotImplementedError
+        if type(code_pattern) != str and type(code_pattern) != int:
+            raise TypeError
+
+        names = []
+        code_pattern = str(code_pattern)
+        codes = [code_pattern]
+
+        while True:
+            new_codes = []
+            for code in codes:
+                if '?' in code:
+                    ind = code.index('?')
+                    new_codes.extend([code[:ind] + str(x) + code[ind+1:] for x in range(10)])
+                else:
+                    new_codes.append(code)
+
+            if new_codes == codes:
+                codes = list(map(int, codes))
+                break
+            else:
+                codes = new_codes.copy()
+
+        for k,v in self.glaciers.items():
+            if v.type in codes:
+                names.append(v.name)
+
+        return names
 
     def sort_by_latest_mass_balance(self, n, reverse):
         """Return the N glaciers with the highest area accumulated in the last measurement."""
@@ -117,3 +158,5 @@ file_path = Path("sheet-A.csv")
 collection = GlacierCollection(file_path)
 mass_balance_file = Path("sheet-EE.csv")
 collection.read_mass_balance_data(mass_balance_file)
+res = collection.find_nearest(-30.16490, -69.80940)
+print(res)
