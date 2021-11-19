@@ -1,4 +1,5 @@
 import csv
+from datetime import datetime
 from pathlib import Path
 from utils import haversine_distance
 
@@ -147,8 +148,7 @@ class GlacierCollection:
 
         for k, v in self.glaciers.items():
             if len(v.mass_balances.keys()) > 0:
-                latest_year = max(v.mass_balances.keys())
-                latest_change = v.mass_balances[latest_year]
+                latest_change = v.mass_balances[max(v.mass_balances.keys())]
 
                 if not reverse:
                     if len(changes.keys()) < n:
@@ -164,11 +164,37 @@ class GlacierCollection:
                         changes.update({latest_change: v})
 
         result = [changes[k] for k in sorted(changes.keys(), reverse=(not reverse))]
-
         return result
 
     def summary(self):
-        raise NotImplementedError
+        # number of glaciers
+        no_glaciers = len(self.glaciers.keys())
+
+        # earliest mass-balance measurement year
+        earliest_year = datetime.now().year
+        for k, v in self.glaciers.items():
+            if len(v.mass_balances.keys()) > 0:
+                min_year_k = min(v.mass_balances.keys())
+
+                if min_year_k < earliest_year:
+                    earliest_year = min_year_k
+
+        # % of glaciers that shrunk at last measurement
+        glaciers_with_measurements = 0
+        shrinkers = 0
+
+        for k, v in self.glaciers.items():
+            if len(v.mass_balances.keys()) > 0:
+                glaciers_with_measurements += 1
+                latest_change = v.mass_balances[max(v.mass_balances.keys())]
+                if latest_change < 0:
+                    shrinkers += 1
+
+        percent_shrunk = round((shrinkers / glaciers_with_measurements) * 100)
+
+        print(f"This collection has {no_glaciers} glaciers.")
+        print(f"The earliest measurement was in {earliest_year}.")
+        print(f"{percent_shrunk}% of glaciers shrunk in their last measurement.")
 
     def plot_extremes(self, output_path):
         raise NotImplementedError
@@ -179,5 +205,4 @@ file_path = Path("sheet-A.csv")
 collection = GlacierCollection(file_path)
 mass_balance_file = Path("sheet-EE.csv")
 collection.read_mass_balance_data(mass_balance_file)
-res = collection.sort_by_latest_mass_balance()
-print(res)
+collection.summary()
