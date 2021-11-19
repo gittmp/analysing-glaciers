@@ -8,11 +8,14 @@ from utils import haversine_distance
 class Glacier:
     def __init__(self, glacier_id, name, unit, lat, lon, code):
 
-        if (type(glacier_id) != str) or (type(name) != str) or (type(unit) != str):
-            raise TypeError
+        # check parameters are of the correct type
+        assert (type(glacier_id) == str), "Glacier ID is not a string"
+        assert (type(name) == str), "Glacier name is not a string"
+        assert (type(unit) == str), "Glacier political unit is not a string"
 
-        if (type(lat) != int and type(lat) != float) or (type(lon) != int and type(lon) != float) or (type(code) != int):
-            raise TypeError
+        assert (type(lat) == int or type(lat) == float), "Latitude of glacier is not of accepted numeric type"
+        assert (type(lon) == int or type(lon) == float), "Longitude of glacier is not of accepted numeric type"
+        assert (type(code) == int), "The glacier type code is not an Integer"
 
         self.id = glacier_id
         self.name = name
@@ -32,8 +35,8 @@ class Glacier:
         # N.B. if key exists but measurement isn't partial, this value is ignored
 
     def plot_mass_balance(self, output_path):
-        if len(self.mass_balances.keys()) == 0:
-            raise ValueError
+
+        assert len(self.mass_balances.keys()) > 0, "No mass balance data recorded for glacier trying to be plotted"
 
         x_vals = self.mass_balances.keys()
         y_vals = self.mass_balances.values()
@@ -128,9 +131,10 @@ class GlacierCollection:
 
     def filter_by_code(self, code_pattern):
         """Return the names of glaciers whose codes match the given pattern."""
-        if type(code_pattern) != str and type(code_pattern) != int:
-            raise TypeError
+        # check parameters
+        assert (type(code_pattern) == str or type(code_pattern) == int), "Input code pattern not a string or an integer"
 
+        # generate result
         names = []
         code_pattern = str(code_pattern)
         codes = [code_pattern]
@@ -158,6 +162,11 @@ class GlacierCollection:
 
     def sort_by_latest_mass_balance(self, n=5, reverse=False):
         """Return the N glaciers with the highest area accumulated in the last measurement."""
+        # check parameters
+        assert type(n) == int, "Input number of glaciers n not an integer"
+        assert type(reverse) == bool, "Input parameter 'bool' must be of boolean type"
+
+        # generate answer
         changes = {}
 
         for k, v in self.glaciers.items():
