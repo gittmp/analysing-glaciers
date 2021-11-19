@@ -16,9 +16,17 @@ class Glacier:
         self.unit = unit
         self.coordinates = (lat, lon)
         self.type = code
+        self.mass_balances = {}
 
-    def add_mass_balance_measurement(self, year, mass_balance):
-        raise NotImplementedError
+    def add_mass_balance_measurement(self, year, mass_balance, partial):
+        if year in self.mass_balances.keys():
+            # if partial measurement and already exists in dict, add to this value to get sum
+            if partial:
+                self.mass_balances[year] += mass_balance
+        else:
+            # if measurement doesnt exist yet, add it
+            self.mass_balances.update({year: mass_balance})
+        # N.B. if key exists but measurement isn't partial, this value is ignored
 
     def plot_mass_balance(self, output_path):
         raise NotImplementedError
@@ -31,19 +39,19 @@ class GlacierCollection:
         with open(file_path, 'r') as file:
             file.seek(0)
             header = file.readline()
-            self.header = header[:-1].split(',')
+            header = header[:-1].split(',')
             reader = csv.reader(file)
             body = list(reader)
 
         self.glaciers = {}
-        id_index = self.header.index('WGMS_ID')
-        name_index = self.header.index('NAME')
-        unit_index = self.header.index('POLITICAL_UNIT')
-        lat_index = self.header.index('LATITUDE')
-        lon_index = self.header.index('LONGITUDE')
-        type1_index = self.header.index('PRIM_CLASSIFIC')
-        type2_index = self.header.index('FORM')
-        type3_index = self.header.index('FRONTAL_CHARS')
+        id_index = header.index('WGMS_ID')
+        name_index = header.index('NAME')
+        unit_index = header.index('POLITICAL_UNIT')
+        lat_index = header.index('LATITUDE')
+        lon_index = header.index('LONGITUDE')
+        type1_index = header.index('PRIM_CLASSIFIC')
+        type2_index = header.index('FORM')
+        type3_index = header.index('FRONTAL_CHARS')
 
         for row in body:
             gid = row[id_index]
@@ -56,7 +64,34 @@ class GlacierCollection:
             self.glaciers.update({gid: Glacier(gid, name, unit, lat, lon, code)})
 
     def read_mass_balance_data(self, file_path):
-        raise NotImplementedError
+
+        with open(file_path, 'r') as file:
+            file.seek(0)
+            header = file.readline()
+            header = header[:-1].split(',')
+            reader = csv.reader(file)
+            body = list(reader)
+
+        id_index = header.index('WGMS_ID')
+        year_index = header.index('YEAR')
+        mass_balance_index = header.index('ANNUAL_BALANCE')
+        lb_index = header.index('LOWER_BOUND')
+        ub_index = header.index('UPPER_BOUND')
+
+        for row in body:
+            gid = row[id_index]
+            year = row[year_index]
+            mass_balance = row[mass_balance_index]
+            l_bound = int(row[lb_index])
+            u_bound = int(row[ub_index])
+
+            if l_bound == 9999 and u_bound == 9999:
+                is_partial = False
+            else:
+                is_partial = True
+
+            if mass_balance != '':
+                self.glaciers[gid].add_mass_balance_measurement(int(year), float(mass_balance), is_partial)
 
     def find_nearest(self, lat, lon, n):
         """Get the n glaciers closest to the given coordinates."""
@@ -80,3 +115,5 @@ class GlacierCollection:
 # Test
 file_path = Path("sheet-A.csv")
 collection = GlacierCollection(file_path)
+mass_balance_file = Path("sheet-EE.csv")
+collection.read_mass_balance_data(mass_balance_file)
