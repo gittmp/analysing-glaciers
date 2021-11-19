@@ -1,4 +1,5 @@
 .DS_Store
 .idea
+__pycache__
 assignment1.pdf
-
+*.png

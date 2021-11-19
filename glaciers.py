@@ -1,6 +1,8 @@
 import csv
+import os
 from datetime import datetime
 from pathlib import Path
+from matplotlib import pyplot as plt
 from utils import haversine_distance
 
 
@@ -31,9 +33,22 @@ class Glacier:
         # N.B. if key exists but measurement isn't partial, this value is ignored
 
     def plot_mass_balance(self, output_path):
-        raise NotImplementedError
+        if len(self.mass_balances.keys()) == 0:
+            raise ValueError
 
-        
+        x_vals = self.mass_balances.keys()
+        y_vals = self.mass_balances.values()
+
+        plot, plot_axes = plt.subplots()
+        plot_axes.plot(x_vals, y_vals, label=self.name)
+        plot_axes.set_title("Graph of net mass-balance per year")
+        plot_axes.set_xlabel("Year")
+        plot_axes.set_ylabel("Mass-balance")
+        plot_axes.legend()
+        plot.tight_layout()
+        plot.savefig(output_path)
+
+
 class GlacierCollection:
 
     def __init__(self, file_path):
@@ -205,4 +220,4 @@ file_path = Path("sheet-A.csv")
 collection = GlacierCollection(file_path)
 mass_balance_file = Path("sheet-EE.csv")
 collection.read_mass_balance_data(mass_balance_file)
-collection.summary()
+collection.plot_extremes("figure.png")
