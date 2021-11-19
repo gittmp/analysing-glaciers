@@ -111,7 +111,6 @@ class GlacierCollection:
 
         return list(nearest.keys())
 
-    
     def filter_by_code(self, code_pattern):
         """Return the names of glaciers whose codes match the given pattern."""
         if type(code_pattern) != str and type(code_pattern) != int:
@@ -142,9 +141,31 @@ class GlacierCollection:
 
         return names
 
-    def sort_by_latest_mass_balance(self, n, reverse):
+    def sort_by_latest_mass_balance(self, n=5, reverse=False):
         """Return the N glaciers with the highest area accumulated in the last measurement."""
-        raise NotImplementedError
+        changes = {}
+
+        for k, v in self.glaciers.items():
+            if len(v.mass_balances.keys()) > 0:
+                latest_year = max(v.mass_balances.keys())
+                latest_change = v.mass_balances[latest_year]
+
+                if not reverse:
+                    if len(changes.keys()) < n:
+                        changes.update({latest_change: v})
+                    elif latest_change > min(changes.keys()):
+                        changes.pop(min(changes.keys()))
+                        changes.update({latest_change: v})
+                else:
+                    if len(changes.keys()) < n:
+                        changes.update({latest_change: v})
+                    elif latest_change < max(changes.keys()):
+                        changes.pop(max(changes.keys()))
+                        changes.update({latest_change: v})
+
+        result = [changes[k] for k in sorted(changes.keys(), reverse=(not reverse))]
+
+        return result
 
     def summary(self):
         raise NotImplementedError
@@ -158,5 +179,5 @@ file_path = Path("sheet-A.csv")
 collection = GlacierCollection(file_path)
 mass_balance_file = Path("sheet-EE.csv")
 collection.read_mass_balance_data(mass_balance_file)
-res = collection.find_nearest(-30.16490, -69.80940)
+res = collection.sort_by_latest_mass_balance()
 print(res)
