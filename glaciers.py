@@ -1,6 +1,6 @@
 import csv
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PosixPath
 from matplotlib import pyplot as plt
 from utils import haversine_distance
 
@@ -10,11 +10,14 @@ class Glacier:
 
         # check parameters are of the correct type
         assert (type(glacier_id) == str), "Glacier ID is not a string"
+        assert (len(glacier_id) == 5), "Glacier ID is not the correct length (should be 5 digits)"
         assert (type(name) == str), "Glacier name is not a string"
         assert (type(unit) == str), "Glacier political unit is not a string"
 
         assert (type(lat) == int or type(lat) == float), "Latitude of glacier is not of accepted numeric type"
+        assert (-90 <= lat <= 90), "Invalid latitude of glacier given (should be in range -90 to 90)"
         assert (type(lon) == int or type(lon) == float), "Longitude of glacier is not of accepted numeric type"
+        assert (-180 <= lon <= 180), "Invalid longitude of glacier given (should be in range -180 to 180)"
         assert (type(code) == int), "The glacier type code is not an Integer"
 
         self.id = glacier_id
@@ -25,6 +28,12 @@ class Glacier:
         self.mass_balances = {}
 
     def add_mass_balance_measurement(self, year, mass_balance, partial):
+        assert (type(year) == int or type(year) == str), "Year of mass-balance measurement not of supported type (integer or string)"
+        year = int(year)
+        assert (0 <= year <= datetime.now().year), "Invalid year given of mass-balance reading (should be a positive and of maximum value the current year (not in future)"
+        assert (type(mass_balance) == int or type(mass_balance) == float), "Mass-balance measurement not of supported numeric type"
+        assert (type(partial) == bool), "Input mass-balance measurement does not indicate whether measurement is partial or full (through boolean type)"
+
         if year in self.mass_balances.keys():
             # if partial measurement and already exists in dict, add to this value to get sum
             if partial:
@@ -35,7 +44,7 @@ class Glacier:
         # N.B. if key exists but measurement isn't partial, this value is ignored
 
     def plot_mass_balance(self, output_path):
-
+        assert (type(output_path) == PosixPath), "Directory plot to be saved to not specified as a Path object"
         assert len(self.mass_balances.keys()) > 0, "No mass balance data recorded for glacier trying to be plotted"
 
         x_vals = self.mass_balances.keys()
@@ -99,8 +108,14 @@ class GlacierCollection:
 
         for row in body:
             gid = row[id_index]
-            year = row[year_index]
+            year = int(row[year_index])
             mass_balance = row[mass_balance_index]
+
+            if mass_balance == '':
+                continue
+            else:
+                mass_balance = float(mass_balance)
+
             l_bound = int(row[lb_index])
             u_bound = int(row[ub_index])
 
@@ -261,4 +276,9 @@ file_path = Path("sheet-A.csv")
 collection = GlacierCollection(file_path)
 mass_balance_file = Path("sheet-EE.csv")
 collection.read_mass_balance_data(mass_balance_file)
+collection.find_nearest(32.38517, 77.86855, n=5)
+collection.filter_by_code('555')
+collection.sort_by_latest_mass_balance()
+collection.sort_by_latest_mass_balance(reverse=True)
+collection.summary()
 collection.plot_extremes("figure.png")
