@@ -8,18 +8,38 @@ from utils import haversine_distance
 class Glacier:
     def __init__(self, glacier_id, name, unit, lat, lon, code):
         # check parameters are of the correct type
-        assert (type(glacier_id) == str), "Glacier ID is not a string"
-        assert (len(glacier_id) == 5), "Glacier ID is not the correct length (should be 5 digits)"
-        assert (type(name) == str), "Glacier name is not a string"
-        assert (type(unit) == str), "Glacier political unit is not a string"
-        assert (len(unit) == 2), "Political unit code of incorrect length (should be length 2)"
-        assert (unit == '99' or unit.isupper()), "Political unit code invalid (should either be capital letters or the unknown code '99')"
+        if type(glacier_id) != str:
+            raise TypeError("Glacier ID is not a string")
 
-        assert (type(lat) == int or type(lat) == float), "Latitude of glacier is not of accepted numeric type"
-        assert (-90 <= lat <= 90), "Invalid latitude of glacier given (should be in range -90 to 90)"
-        assert (type(lon) == int or type(lon) == float), "Longitude of glacier is not of accepted numeric type"
-        assert (-180 <= lon <= 180), "Invalid longitude of glacier given (should be in range -180 to 180)"
-        assert (type(code) == int and len(str(code)) == 3), "The glacier type code is not a 3-digit integer"
+        if len(glacier_id) != 5:
+            raise ValueError("Glacier ID is not the correct length (should be 5 digits)")
+
+        if type(name) != str:
+            raise TypeError("Glacier name is not a string")
+
+        if type(unit) != str:
+            raise TypeError("Glacier political unit is not a string")
+
+        if len(unit) != 2:
+            raise ValueError("Political unit code of incorrect length (should be length 2)")
+
+        if unit != '99' and not unit.isupper():
+            raise ValueError("Political unit code invalid (should either be capital letters or the unknown code '99')")
+
+        if type(lat) != int and type(lat) != float:
+            raise TypeError("Latitude of glacier is not of accepted numeric type")
+
+        if not (-90 <= lat <= 90):
+            raise ValueError("Invalid latitude of glacier given (should be in range -90 to 90)")
+
+        if not (type(lon) == int or type(lon) == float):
+            raise TypeError("Longitude of glacier is not of accepted numeric type")
+
+        if not (-180 <= lon <= 180):
+            raise ValueError("Invalid longitude of glacier given (should be in range -180 to 180)")
+
+        if not (type(code) == int and len(str(code)) == 3):
+            raise ValueError("The glacier type code is not a 3-digit integer")
 
         self.id = glacier_id
         self.name = name
@@ -30,11 +50,19 @@ class Glacier:
 
     def add_mass_balance_measurement(self, year, mass_balance, partial):
         # check parameters
-        assert (type(year) == int or type(year) == str), "Year of mass-balance measurement not of supported type (integer or string)"
+        if not (type(year) == int or type(year) == str):
+            raise TypeError("Year of mass-balance measurement not of supported type (integer or string)")
+
         year = int(year)
-        assert (0 <= year <= datetime.now().year), "Invalid year given of mass-balance reading (should be a positive and of maximum value the current year (not in future)"
-        assert (type(mass_balance) == int or type(mass_balance) == float), "Mass-balance measurement not of supported numeric type"
-        assert (type(partial) == bool), "Input mass-balance measurement does not indicate whether measurement is partial or full (through boolean type)"
+
+        if not (0 <= year <= datetime.now().year):
+            raise ValueError("Invalid year given of mass-balance reading (should be a positive and of maximum value the current year (not in future)")
+
+        if not (type(mass_balance) == int or type(mass_balance) == float):
+            raise TypeError("Mass-balance measurement not of supported numeric type")
+
+        if not (type(partial) == bool):
+            raise TypeError("Input mass-balance measurement does not indicate whether measurement is partial or full (through boolean type)")
 
         # update glacier with measurement
         if year in self.mass_balances.keys():
@@ -48,8 +76,11 @@ class Glacier:
 
     def plot_mass_balance(self, output_path):
         # check parameters and glacier
-        assert (type(output_path) == PosixPath), "Directory plot to be saved to not specified as a Path object"
-        assert (len(self.mass_balances.keys()) > 0), "No mass balance data recorded for glacier trying to be plotted"
+        if not (type(output_path) == PosixPath):
+            raise TypeError("Directory plot to be saved to not specified as a Path object")
+
+        if not (len(self.mass_balances.keys()) > 0):
+            raise ValueError("No mass balance data recorded for glacier trying to be plotted")
 
         # generate plot
         x_vals = self.mass_balances.keys()
@@ -69,8 +100,11 @@ class GlacierCollection:
 
     def __init__(self, file_path):
         # check parameters
-        assert (type(file_path) == PosixPath), "File loading glacier data from not specified as a Path object"
-        assert file_path.is_file(), "Specified glacier data file does not exist"
+        if not (type(file_path) == PosixPath):
+            raise TypeError("File loading glacier data from not specified as a Path object")
+
+        if not file_path.is_file():
+            raise FileNotFoundError("Specified glacier data file does not exist")
 
         # load glacier data from file
         with open(file_path, 'r') as file:
@@ -80,7 +114,8 @@ class GlacierCollection:
             reader = csv.reader(file)
             body = list(reader)
 
-        assert (len(body) > 0), "No glaciers specified in the input data file"
+        if not (len(body) > 0):
+            raise EOFError("No glaciers specified in the input data file")
 
         self.glaciers = {}
         id_index = header.index('WGMS_ID')
