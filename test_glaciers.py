@@ -22,22 +22,20 @@ def test_correct_glacier_creation():
 
 
 # glacier object attempting to be created with invalid ID
-def test_invalid_glacier_id():
-    tests = {
-        55555: TypeError,
-        100.55: TypeError,
-        '000': ValueError,
+id_tests = [(55555, TypeError),
+         (100.55, TypeError),
+         ('000', ValueError)]
 
-    }
 
-    for id, error in tests.items():
-        with raises(error) as exception:
-            Glacier(glacier_id=id,
-                    name='GLACIER',
-                    unit='AR',
-                    lat=-33.08750,
-                    lon=-70.05670,
-                    code=123)
+@pytest.mark.parametrize("id, error", id_tests)
+def test_invalid_glacier_id(id, error):
+    with raises(error) as exception:
+        Glacier(glacier_id=id,
+                name='GLACIER',
+                unit='AR',
+                lat=-33.08750,
+                lon=-70.05670,
+                code=123)
 
 
 # test that creating a glacier with an invalid name isn't possible
@@ -52,67 +50,67 @@ def test_invalid_glacier_name():
 
 
 # test inputting an invalid glacier political unit
-def test_invalid_political_unit():
-    tests = {
-        55: TypeError,
-        'longunit': ValueError
-    }
+unit_tests = [(55, TypeError),
+              ('longunit', ValueError)]
 
-    for unit, error in tests.items():
-        with raises(error) as exception:
-            Glacier(glacier_id='04532',
-                    name='AGUA NEGRA',
-                    unit=unit,
-                    lat=-30.16490,
-                    lon=-69.80940,
-                    code=638)
+
+@pytest.mark.parametrize("unit, error", unit_tests)
+def test_invalid_political_unit(unit, error):
+    with raises(error) as exception:
+        Glacier(glacier_id='04532',
+                name='AGUA NEGRA',
+                unit=unit,
+                lat=-30.16490,
+                lon=-69.80940,
+                code=638)
 
 
 # testing invalid longitude and latitudes to glacier constructor
-def test_invalid_lat_lon():
-    tests = [[TypeError, 'invalid_string_lat', -69.80940],
-             [TypeError, -30.16490, 'invalid_string_lon'],
-             [ValueError, 100.0, -69.80940],
-             [ValueError, -100.0, -69.80940],
-             [ValueError, -30.16490, 200.0],
-             [ValueError, -30.16490, -200.0]]
+latlon_tests = [(TypeError, 'invalid_string_lat', -69.80940),
+                (TypeError, -30.16490, 'invalid_string_lon'),
+                (ValueError, 100.0, -69.80940),
+                (ValueError, -100.0, -69.80940),
+                (ValueError, -30.16490, 200.0),
+                (ValueError, -30.16490, -200.0)]
 
-    for test in tests:
-        error = test[0]
-        lat = test[1]
-        lon = test[2]
 
-        with raises(error) as exception:
-            Glacier(glacier_id='04532',
-                    name='AGUA NEGRA',
-                    unit='AR',
-                    lat=lat,
-                    lon=lon,
-                    code=638)
+@pytest.mark.parametrize("error, lat, lon", latlon_tests)
+def test_invalid_lat_lon(error, lat, lon):
+    with raises(error) as exception:
+        Glacier(glacier_id='04532',
+                name='AGUA NEGRA',
+                unit='AR',
+                lat=lat,
+                lon=lon,
+                code=638)
 
 
 # testing invalid glacier type codes
-def test_invalid_glacier_code():
-    tests = {
-        'ABC': TypeError,
-        '123': TypeError,
-        0: ValueError,
-        1000.9: TypeError,
-        9999: ValueError
-    }
+code_tests = [('ABC', TypeError),
+              ('123', TypeError),
+              (0, ValueError),
+              (1000.9, TypeError),
+              (9999, ValueError)]
 
-    for code, error in tests.items():
-        with raises(error) as exception:
-            Glacier(glacier_id='04532',
-                    name='AGUA NEGRA',
-                    unit='AR',
-                    lat=-30.16490,
-                    lon=-69.80940,
-                    code=code)
+
+@pytest.mark.parametrize("code, error", code_tests)
+def test_invalid_glacier_code(code, error):
+    with raises(error) as exception:
+        Glacier(glacier_id='04532',
+                name='AGUA NEGRA',
+                unit='AR',
+                lat=-30.16490,
+                lon=-69.80940,
+                code=code)
 
 
 # testing correct input on Glacier method for adding mass-balance measurement
-def test_correct_mass_balance():
+correct_mb_tests = [(2021, -234.99, False),
+                    (1999, 500, True)]
+
+
+@pytest.mark.parametrize("year, mass_balance, partial", correct_mb_tests)
+def test_correct_mass_balance(year, mass_balance, partial):
     glacier = Glacier(glacier_id='04532',
                       name='AGUA NEGRA',
                       unit='AR',
@@ -120,17 +118,9 @@ def test_correct_mass_balance():
                       lon=-69.80940,
                       code=638)
 
-    tests = [[2021, -234.99, False],
-             [1999, 500, True]]
-
-    for test in tests:
-        year = test[0]
-        mass_balance = test[1]
-        partial = test[2]
-
-        assert glacier.add_mass_balance_measurement(year=year,
-                                                    mass_balance=mass_balance,
-                                                    partial=partial)
+    assert glacier.add_mass_balance_measurement(year=year,
+                                                mass_balance=mass_balance,
+                                                partial=partial)
 
 
 # test invalid input into mass-balance glacier method
@@ -215,17 +205,3 @@ def test_no_mass_balance_file():
         collection = GlacierCollection(file)
         mass_balance_file = Path("invalid_file.txt")
         collection.read_mass_balance_data(mass_balance_file)
-
-
-# Test
-# file_path = Path("sheet-A.csv")
-# collection = GlacierCollection(file_path)
-# mass_balance_file = Path("sheet-EE.csv")
-# collection.read_mass_balance_data(mass_balance_file)
-# collection.find_nearest(32.38517, 77.86855, n=5)
-# collection.filter_by_code('555')
-# collection.sort_by_latest_mass_balance()
-# collection.sort_by_latest_mass_balance(reverse=True)
-# collection.summary()
-# plot_file = Path("figure.png")
-# collection.plot_extremes(plot_file)
