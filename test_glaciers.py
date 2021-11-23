@@ -266,3 +266,130 @@ def test_invalid_find_nearest(lat, lon, n, error):
     with raises(error) as exception:
         collection.find_nearest(lat=lat, lon=lon, n=n)
 
+
+# test filter method on correct valid input
+def test_correct_filter():
+    file = Path('sheet-A.csv')
+    collection = GlacierCollection(file)
+    mb_file = Path('sheet-EE.csv')
+    collection.read_mass_balance_data(mb_file)
+
+    res1 = collection.filter_by_code("638")
+    assert len(res1) == 12
+
+    res2 = collection.filter_by_code(638)
+    assert len(res2) == 12
+
+    res3 = collection.filter_by_code("52?")
+    assert len(res3) == 16
+
+    res4 = collection.filter_by_code("999")
+    assert len(res4) == 0
+
+    all_results = collection.filter_by_code("???")
+    assert len(all_results) == 1696
+
+
+# test invalid inputs into filter method
+invalid_filter_tests = [(10.1, TypeError),
+                        ("12345", ValueError),
+                        ("ABC", ValueError),
+                        ("1!2", ValueError)]
+
+
+@pytest.mark.parametrize("filter, error", invalid_filter_tests)
+def test_invalid_find_nearest(filter, error):
+    file = Path('sheet-A.csv')
+    collection = GlacierCollection(file)
+    mb_file = Path('sheet-EE.csv')
+    collection.read_mass_balance_data(mb_file)
+
+    with raises(error) as exception:
+        collection.filter_by_code(filter)
+
+
+# test collection method sort_by_latest_mass_balance on valid inputs
+def test_correct_sort():
+    file = Path('sheet-A.csv')
+    collection = GlacierCollection(file)
+    mb_file = Path('sort_test_values.csv')
+    collection.read_mass_balance_data(mb_file)
+
+    res1 = collection.sort_by_latest_mass_balance(n=1, reverse=True)
+    assert len(res1) == 1 and res1[0] == collection.glaciers['03987']
+
+    res2 = collection.sort_by_latest_mass_balance(n=1, reverse=False)
+    assert len(res2) == 1 and res2[0] == collection.glaciers['02660']
+
+    res3 = collection.sort_by_latest_mass_balance(n=5, reverse=True)
+    assert len(res3) == 5
+
+    res4 = collection.sort_by_latest_mass_balance(n=5, reverse=False)
+    assert len(res4) == 5
+
+
+# test sort_by_latest_mass_balance for invalid inputs
+invalid_sort_tests = [(TypeError, '66', False, 'sort_test_values.csv'),
+                      (TypeError, 10, 'not true', 'sort_test_values.csv'),
+                      (ValueError, -200, True, 'sort_test_values.csv'),
+                      (ValueError, 10, False, 'sort_empty_values.csv')]
+
+
+@pytest.mark.parametrize("error, n, reverse, data", invalid_sort_tests)
+def test_invalid_sort(error, n, reverse, data):
+    file = Path('sheet-A.csv')
+    collection = GlacierCollection(file)
+    mb_file = Path(data)
+    collection.read_mass_balance_data(mb_file)
+
+    with raises(error) as exception:
+        collection.sort_by_latest_mass_balance(n=n, reverse=reverse)
+
+
+# test summary method on correct valid data
+def test_valid_summary():
+    file = Path('sheet-A.csv')
+    collection = GlacierCollection(file)
+    mb_file = Path('sheet-EE.csv')
+    collection.read_mass_balance_data(mb_file)
+
+    assert collection.summary()
+
+
+# test summary method on invalid data
+def test_invalid_summary():
+    file = Path('sheet-A.csv')
+    collection = GlacierCollection(file)
+
+    with raises(ZeroDivisionError) as exception:
+        collection.summary()
+
+
+# test collections method to plot extremes works for correct data/inputs
+def test_extremes_plot():
+    file = Path('sheet-A.csv')
+    collection = GlacierCollection(file)
+    mb_file = Path('sheet-EE.csv')
+    collection.read_mass_balance_data(mb_file)
+
+    fig = Path('./extremes_figure.png')
+    collection.plot_extremes(fig)
+
+    assert fig.is_file()
+
+
+# test plot extremes method on invalid data
+invalid_extremes_tests = [(TypeError, 'nonpathfile.png', 'sheet-EE.csv'),
+                          (ValueError, Path('figure.png'), 'extremes1.csv'),
+                          (ValueError, Path('figure.png'), 'extremes2.csv')]
+
+
+@pytest.mark.parametrize("error, plot_file, data", invalid_extremes_tests)
+def test_invalid_plot_extremes(error, plot_file, data):
+    file = Path('sheet-A.csv')
+    collection = GlacierCollection(file)
+    mb_file = Path(data)
+    collection.read_mass_balance_data(mb_file)
+
+    with raises(error) as exception:
+        collection.plot_extremes(plot_file)

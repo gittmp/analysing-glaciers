@@ -274,10 +274,14 @@ class GlacierCollection:
         if not (type(code_pattern) == str or type(code_pattern) == int):
             raise TypeError("Input code pattern not a string or an integer")
 
+        code_pattern = str(code_pattern)
+
         if not (len(code_pattern) == 3):
             raise ValueError("Input code pattern must be of length 3")
 
-        if type(code_pattern) == str and not code_pattern.isnumeric():
+        numeric_pattern = code_pattern.replace("?", "", 3)
+
+        if type(code_pattern) == str and len(numeric_pattern) > 0 and not numeric_pattern.isnumeric():
             raise ValueError("Input code pattern must be all numeric characters")
 
         # filter all glaciers by pattern
@@ -311,6 +315,9 @@ class GlacierCollection:
         # check parameters
         if not (type(n) == int):
             raise TypeError("Input number of glaciers 'n' is not an integer")
+
+        if n < 0:
+            raise ValueError("Input number of glaciers 'n' must be non-negative")
 
         if not (type(reverse) == bool):
             raise TypeError("Input parameter 'reverse' must be of boolean type")
@@ -378,7 +385,9 @@ class GlacierCollection:
         print(f"The earliest measurement was in {earliest_year}.")
         print(f"{percent_shrunk}% of glaciers shrunk in their last measurement.")
 
-    def plot_extremes(self, output_path):
+        return True
+
+    def plot_extremes(self, output_path, latest_=None):
         # check parameters
         if not (type(output_path) == PosixPath):
             raise TypeError("Directory plot to be saved to not specified as a Path object")
@@ -386,10 +395,10 @@ class GlacierCollection:
         # retrieve growth extreme data
         grow_extreme = self.sort_by_latest_mass_balance(n=1)
         grow_extreme_glacier = grow_extreme[0]
+        latest_year = max(grow_extreme_glacier.mass_balances.keys())
+        growth = grow_extreme_glacier.mass_balances[latest_year]
 
-        growth = grow_extreme_glacier.mass_balances[max(grow_extreme_glacier.mass_balances.keys())]
-
-        if growth == 0:
+        if growth <= 0:
             raise ValueError("No glacier grew in latest measurements")
 
         # plot growth extreme
@@ -402,10 +411,10 @@ class GlacierCollection:
         # retrieve shrinking extreme data
         shrunk_extreme = self.sort_by_latest_mass_balance(n=1, reverse=True)
         shrunk_extreme_glacier = shrunk_extreme[0]
+        latest_year = max(shrunk_extreme_glacier.mass_balances.keys())
+        shrinkage = shrunk_extreme_glacier.mass_balances[latest_year]
 
-        shrinkage = shrunk_extreme_glacier.mass_balances[max(shrunk_extreme_glacier.mass_balances.keys())]
-
-        if shrinkage == 0:
+        if shrinkage >= 0:
             raise ValueError("No glacier shrunk in latest measurements")
 
         # plot shrinking extreme
