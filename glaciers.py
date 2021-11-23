@@ -139,24 +139,37 @@ class GlacierCollection:
             type3 = row[type3_index]
 
             # validity checks
-            assert lat.replace('.', '', 1).replace('-', '', 1).isnumeric(), f"Specified latitude on row {i} of data file is not numeric"
-            assert lon.replace('.', '', 1).replace('-', '', 1).isnumeric(), f"Specified longitude on row {i} of data file is not numeric"
-            assert (len(type1) == 1 and type1.isdigit()), f"Primary classification on row {i} of data file is not a single digit"
-            assert (len(type2) == 1 and type2.isdigit()), f"Form on row {i} of data file is not a single digit"
-            assert (len(type3) == 1 and type3.isdigit()), f"Frontal characteristics on row {i} of data file is not a single digit"
+            if not lat.replace('.', '', 1).replace('-', '', 1).isnumeric():
+                raise ValueError(f"Specified latitude on row {i} of data file is not numeric")
+
+            if not lon.replace('.', '', 1).replace('-', '', 1).isnumeric():
+                raise ValueError(f"Specified longitude on row {i} of data file is not numeric")
+
+            if not (len(type1) == 1 and type1.isdigit()):
+                raise ValueError(f"Primary classification on row {i} of data file is not a single digit")
+
+            if not (len(type2) == 1 and type2.isdigit()):
+                raise ValueError(f"Form on row {i} of data file is not a single digit")
+
+            if not (len(type3) == 1 and type3.isdigit()):
+                raise ValueError(f"Frontal characteristics on row {i} of data file is not a single digit")
 
             lat = float(lat)
             lon = float(lon)
             code = int(type1 + type2 + type3)
 
-            assert (gid not in self.glaciers.keys()), f"Glacier ID on row {i} of data file not unique (or glacier specified multiple times)"
+            if gid in self.glaciers.keys():
+                raise KeyError(f"Glacier ID on row {i} of data file not unique (or glacier specified multiple times)")
 
             self.glaciers.update({gid: Glacier(gid, name, unit, lat, lon, code)})
 
     def read_mass_balance_data(self, file_path):
         # check paramaters
-        assert (type(file_path) == PosixPath), "File holding mass-balance data not specified as a Path object"
-        assert file_path.is_file(), "Specified glacier mass-balance data file does not exist"
+        if not (type(file_path) == PosixPath):
+            TypeError("File holding mass-balance data not specified as a Path object")
+
+        if not file_path.is_file():
+            raise FileNotFoundError("Specified glacier mass-balance data file does not exist")
 
         # load mass balance data from file
         with open(file_path, 'r') as file:
@@ -166,7 +179,8 @@ class GlacierCollection:
             reader = csv.reader(file)
             body = list(reader)
 
-        assert (len(body) > 0), "No mass-balance data specified in the input file"
+        if len(body) == 0:
+            raise EOFError("No mass-balance data specified in the input file")
 
         id_index = header.index('WGMS_ID')
         year_index = header.index('YEAR')
@@ -193,17 +207,28 @@ class GlacierCollection:
                 is_partial = True
 
             if mass_balance != '':
-                assert (gid in self.glaciers.keys()), "Glacier trying to be populated with mass-balance data not present in collection"
+                if gid not in self.glaciers.keys():
+                    raise KeyError("Glacier trying to be populated with mass-balance data not present in collection")
+
                 self.glaciers[gid].add_mass_balance_measurement(int(year), float(mass_balance), is_partial)
 
     def find_nearest(self, lat, lon, n=5):
         """Get the n glaciers closest to the given coordinates."""
         # check parameters
-        assert (type(lat) == int or type(lat) == float), "Latitude is not of accepted numeric type"
-        assert (-90 <= lat <= 90), "Invalid latitude given (should be in range -90 to 90)"
-        assert (type(lon) == int or type(lon) == float), "Longitude is not of accepted numeric type"
-        assert (-180 <= lon <= 180), "Invalid longitude given (should be in range -180 to 180)"
-        assert (type(n) == int), "The number of glaciers to return 'n' is not an integer"
+        if not (type(lat) == int or type(lat) == float):
+            raise TypeError("Latitude is not of accepted numeric type")
+
+        if not (-90 <= lat <= 90):
+            raise ValueError("Invalid latitude given (should be in range -90 to 90)")
+
+        if not (type(lon) == int or type(lon) == float):
+            raise TypeError("Longitude is not of accepted numeric type")
+
+        if not (-180 <= lon <= 180):
+            raise ValueError("Invalid longitude given (should be in range -180 to 180)")
+
+        if type(n) != int:
+            raise TypeError("The number of glaciers to return 'n' is not an integer")
 
         # calculate nearest glaciers
         nearest = {}
@@ -224,11 +249,14 @@ class GlacierCollection:
     def filter_by_code(self, code_pattern):
         """Return the names of glaciers whose codes match the given pattern."""
         # check parameters
-        assert (type(code_pattern) == str or type(code_pattern) == int), "Input code pattern not a string or an integer"
-        assert (len(code_pattern) == 3), "Input code pattern must be of length 3"
+        if not (type(code_pattern) == str or type(code_pattern) == int):
+            raise TypeError("Input code pattern not a string or an integer")
 
-        if type(code_pattern) == str:
-            assert code_pattern.isnumeric(), "Input code pattern must be all numeric characters"
+        if not (len(code_pattern) == 3):
+            raise ValueError("Input code pattern must be of length 3")
+
+        if type(code_pattern) == str and not code_pattern.isnumeric():
+            raise ValueError("Input code pattern must be all numeric characters")
 
         # filter all glaciers by pattern
         names = []
@@ -250,7 +278,7 @@ class GlacierCollection:
             else:
                 codes = new_codes.copy()
 
-        for k,v in self.glaciers.items():
+        for k, v in self.glaciers.items():
             if v.type in codes:
                 names.append(v.name)
 
@@ -259,8 +287,11 @@ class GlacierCollection:
     def sort_by_latest_mass_balance(self, n=5, reverse=False):
         """Return the N glaciers with the highest area accumulated in the last measurement."""
         # check parameters
-        assert (type(n) == int), "Input number of glaciers n not an integer"
-        assert (type(reverse) == bool), "Input parameter 'reverse' must be of boolean type"
+        if not (type(n) == int):
+            raise TypeError("Input number of glaciers 'n' is not an integer")
+
+        if not (type(reverse) == bool):
+            raise TypeError("Input parameter 'reverse' must be of boolean type")
 
         # find greatest/smallest change and return result
         changes = {}
@@ -282,11 +313,13 @@ class GlacierCollection:
                         changes.pop(max(changes.keys()))
                         changes.update({latest_change: v})
 
-        assert (len(changes) > 0), "No glaciers have mass-balance data, so cannot return highest/lowest changes"
+        if len(changes) == 0:
+            raise ValueError("No glaciers have mass-balance data, so cannot return highest/lowest changes")
 
         result = [changes[k] for k in sorted(changes.keys(), reverse=(not reverse))]
 
-        assert (len(result) == n), "There are not 'n' glaciers in the collection with mass-balance data to sort"
+        if not (len(result) == n):
+            raise ValueError("There are not 'n' glaciers in the collection with mass-balance data to sort")
 
         return result
 
@@ -314,7 +347,9 @@ class GlacierCollection:
                 if latest_change < 0:
                     shrinkers += 1
 
-        assert (glaciers_with_measurements != 0), "No glaciers in collection have mass-balance data"
+        if glaciers_with_measurements == 0:
+            raise ZeroDivisionError("No glaciers in collection have mass-balance data")
+
         percent_shrunk = round((shrinkers / glaciers_with_measurements) * 100)
 
         print(f"This collection has {no_glaciers} glaciers.")
@@ -323,14 +358,17 @@ class GlacierCollection:
 
     def plot_extremes(self, output_path):
         # check parameters
-        assert (type(output_path) == PosixPath), "Directory plot to be saved to not specified as a Path object"
+        if not (type(output_path) == PosixPath):
+            raise TypeError("Directory plot to be saved to not specified as a Path object")
 
         # retrieve growth extreme data
         grow_extreme = self.sort_by_latest_mass_balance(n=1)
         grow_extreme_glacier = grow_extreme[0]
 
         growth = grow_extreme_glacier.mass_balances[max(grow_extreme_glacier.mass_balances.keys())]
-        assert (growth > 0), "No glacier grew in latest measurements"
+
+        if growth == 0:
+            raise ValueError("No glacier grew in latest measurements")
 
         # plot growth extreme
         x_vals_grow = grow_extreme_glacier.mass_balances.keys()
@@ -344,7 +382,9 @@ class GlacierCollection:
         shrunk_extreme_glacier = shrunk_extreme[0]
 
         shrinkage = shrunk_extreme_glacier.mass_balances[max(shrunk_extreme_glacier.mass_balances.keys())]
-        assert (shrinkage < 0), "No glacier shrunk in latest measurements"
+
+        if shrinkage == 0:
+            raise ValueError("No glacier shrunk in latest measurements")
 
         # plot shrinking extreme
         x_vals_shrunk = shrunk_extreme_glacier.mass_balances.keys()
