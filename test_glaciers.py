@@ -106,7 +106,9 @@ def test_invalid_glacier_code(code, error):
 
 # testing correct input on Glacier method for adding mass-balance measurement
 correct_mb_tests = [(2021, -234.99, False),
-                    (1999, 500, True)]
+                    (1999, 500, True),
+                    (1999, 200.3, True),
+                    (1999, 1000, False)]
 
 
 @pytest.mark.parametrize("year, mass_balance, partial", correct_mb_tests)
