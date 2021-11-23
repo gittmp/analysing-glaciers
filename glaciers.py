@@ -54,8 +54,8 @@ class Glacier:
 
     def add_mass_balance_measurement(self, year, mass_balance, partial):
         # check parameters
-        if not (type(year) == int or type(year) == str):
-            raise TypeError("Year of mass-balance measurement not of supported type (integer or string)")
+        if not (type(year) == int or (type(year) == str and year.isnumeric())):
+            raise TypeError("Year of mass-balance measurement not of supported type (integer or numeric string)")
 
         year = int(year)
 
@@ -77,6 +77,8 @@ class Glacier:
             # if measurement doesnt exist yet, add it
             self.mass_balances.update({year: mass_balance})
         # N.B. if key exists but measurement isn't partial, this value is ignored
+
+        return True
 
     def plot_mass_balance(self, output_path):
         # check parameters and glacier

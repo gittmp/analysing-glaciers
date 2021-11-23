@@ -1,4 +1,5 @@
 from glaciers import Glacier, GlacierCollection
+import pytest
 from pytest import raises
 from pathlib import Path
 
@@ -108,3 +109,123 @@ def test_invalid_glacier_code():
                     lat=-30.16490,
                     lon=-69.80940,
                     code=code)
+
+
+# testing correct input on Glacier method for adding mass-balance measurement
+def test_correct_mass_balance():
+    glacier = Glacier(glacier_id='04532',
+                      name='AGUA NEGRA',
+                      unit='AR',
+                      lat=-30.16490,
+                      lon=-69.80940,
+                      code=638)
+
+    tests = [[2021, -234.99, False],
+             [1999, 500, True]]
+
+    for test in tests:
+        year = test[0]
+        mass_balance = test[1]
+        partial = test[2]
+
+        assert glacier.add_mass_balance_measurement(year=year,
+                                                    mass_balance=mass_balance,
+                                                    partial=partial)
+
+
+# test invalid input into mass-balance glacier method
+tests = [(ValueError, 2055, -234.99, False),
+         (ValueError, -10, 500, True),
+         (TypeError, "two thousand", -50.99, True),
+         (TypeError, 2016, "negative fifty", True),
+         (TypeError, 2000, 0.0, "not_a_bool")]
+
+
+@pytest.mark.parametrize("error,year,mass_balance,partial", tests)
+def test_invalid_mass_balance_measurement(error, year, mass_balance, partial):
+    glacier = Glacier(glacier_id='04532',
+                      name='AGUA NEGRA',
+                      unit='AR',
+                      lat=-30.16490,
+                      lon=-69.80940,
+                      code=638)
+
+    with raises(error) as exception:
+        glacier.add_mass_balance_measurement(year=year,
+                                             mass_balance=mass_balance,
+                                             partial=partial)
+
+
+# test correct input of glacier plotting method
+def test_correct_glacier_plot():
+    glacier = Glacier(glacier_id='04532',
+                      name='AGUA NEGRA',
+                      unit='AR',
+                      lat=-30.16490,
+                      lon=-69.80940,
+                      code=638)
+
+    glacier.add_mass_balance_measurement(year=2021, mass_balance=-200, partial=False)
+    glacier.add_mass_balance_measurement(year=2020, mass_balance=-100, partial=False)
+    glacier.add_mass_balance_measurement(year=2019, mass_balance=100, partial=False)
+
+    file = Path('./figure.png')
+    glacier.plot_mass_balance(file)
+
+    assert file.is_file()
+
+
+# test invalid input into glacier plot method and if no mass-balance data exists
+def test_invalid_glacier_plot_inputs():
+    glacier = Glacier(glacier_id='04532',
+                      name='AGUA NEGRA',
+                      unit='AR',
+                      lat=-30.16490,
+                      lon=-69.80940,
+                      code=638)
+
+    with raises(ValueError) as exception:
+        file = Path('./figure.png')
+        glacier.plot_mass_balance(file)
+
+    glacier.add_mass_balance_measurement(year=2021, mass_balance=-200, partial=False)
+    glacier.add_mass_balance_measurement(year=2020, mass_balance=-100, partial=False)
+
+    with raises(TypeError) as exception:
+        glacier.plot_mass_balance('just_a_string')
+
+
+# a file which does not exist is input into the collection constructor
+def test_no_glacier_file():
+    with raises(FileNotFoundError) as exception:
+        file = Path('invalid_file.png')
+        GlacierCollection(file)
+
+
+# existing glacier data file of correct format should pass
+def test_correct_glacier_file():
+    file = Path('sheet-A.csv')
+    assert GlacierCollection(file)
+
+
+# a non-existent file passed into mass-balance reading method
+def test_no_mass_balance_file():
+    with raises(FileNotFoundError) as exception:
+        file = Path('sheet-A.csv')
+        collection = GlacierCollection(file)
+        mass_balance_file = Path("invalid_file.txt")
+        collection.read_mass_balance_data(mass_balance_file)
+
+
+# Test
+# file_path = Path("sheet-A.csv")
+# collection = GlacierCollection(file_path)
+# mass_balance_file = Path("sheet-EE.csv")
+# collection.read_mass_balance_data(mass_balance_file)
+# collection.find_nearest(32.38517, 77.86855, n=5)
+# collection.filter_by_code('555')
+# collection.sort_by_latest_mass_balance()
+# collection.sort_by_latest_mass_balance(reverse=True)
+# collection.summary()
+# plot_file = Path("figure.png")
+# collection.plot_extremes(plot_file)
