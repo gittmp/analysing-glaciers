@@ -124,14 +124,14 @@ def test_correct_mass_balance(year, mass_balance, partial):
 
 
 # test invalid input into mass-balance glacier method
-tests = [(ValueError, 2055, -234.99, False),
-         (ValueError, -10, 500, True),
-         (TypeError, "two thousand", -50.99, True),
-         (TypeError, 2016, "negative fifty", True),
-         (TypeError, 2000, 0.0, "not_a_bool")]
+invalid_mb_tests = [(ValueError, 2055, -234.99, False),
+                    (ValueError, -10, 500, True),
+                    (TypeError, "two thousand", -50.99, True),
+                    (TypeError, 2016, "negative fifty", True),
+                    (TypeError, 2000, 0.0, "not_a_bool")]
 
 
-@pytest.mark.parametrize("error,year,mass_balance,partial", tests)
+@pytest.mark.parametrize("error, year, mass_balance, partial", invalid_mb_tests)
 def test_invalid_mass_balance_measurement(error, year, mass_balance, partial):
     glacier = Glacier(glacier_id='04532',
                       name='AGUA NEGRA',
@@ -185,23 +185,84 @@ def test_invalid_glacier_plot_inputs():
         glacier.plot_mass_balance('just_a_string')
 
 
-# a file which does not exist is input into the collection constructor
-def test_no_glacier_file():
-    with raises(FileNotFoundError) as exception:
-        file = Path('invalid_file.png')
-        GlacierCollection(file)
-
-
-# existing glacier data file of correct format should pass
-def test_correct_glacier_file():
+# test glacier construction on correct input
+def test_correct_collection_init():
     file = Path('sheet-A.csv')
     assert GlacierCollection(file)
 
 
-# a non-existent file passed into mass-balance reading method
-def test_no_mass_balance_file():
-    with raises(FileNotFoundError) as exception:
-        file = Path('sheet-A.csv')
-        collection = GlacierCollection(file)
-        mass_balance_file = Path("invalid_file.txt")
-        collection.read_mass_balance_data(mass_balance_file)
+# invalid files input into the glacier collection constructor
+invalid_file_tests = [('nonpathfile.csv', TypeError),
+                      (Path('doesntexist.csv'), FileNotFoundError),
+                      (Path('wrongextension.png'), ValueError),
+                      (Path('emptyfile.csv'), EOFError),
+                      (Path('invalid_latlon.csv'), ValueError),
+                      (Path('invalid_code.csv'), ValueError),
+                      (Path('duplicate_keys.csv'), KeyError)]
+
+
+@pytest.mark.parametrize("file, error", invalid_file_tests)
+def test_invalid_glacier_file(file, error):
+    with raises(error) as exception:
+        GlacierCollection(file)
+
+
+# test reading in a correct mass-balance data file
+def test_correct_mass_balance_file():
+    file = Path('sheet-A.csv')
+    collection = GlacierCollection(file)
+    mb_file = Path('sheet-EE.csv')
+    assert collection.read_mass_balance_data(mb_file)
+
+
+# test invalid inputs into mass-balance reading method
+mb_file_tests = [('nonpathfile.csv', TypeError),
+                (Path('doesntexist.csv'), FileNotFoundError),
+                (Path('wrongextension.png'), ValueError),
+                (Path('emptyfile.csv'), EOFError),
+                (Path('invalid_id.csv'), KeyError)]
+
+
+@pytest.mark.parametrize("mb_file, error", mb_file_tests)
+def test_no_mass_balance_file(mb_file, error):
+    file = Path('sheet-A.csv')
+    collection = GlacierCollection(file)
+
+    with raises(error) as exception:
+        collection.read_mass_balance_data(mb_file)
+
+
+# test if find_nearest method works correctly on valid input
+def test_correct_find_nearest():
+    file = Path('sheet-A.csv')
+    collection = GlacierCollection(file)
+    mb_file = Path('sheet-EE.csv')
+    collection.read_mass_balance_data(mb_file)
+
+    nearest10 = collection.find_nearest(lat=-46.65000, lon=-73.18000, n=10)
+    assert len(nearest10) == 10
+
+    nearest1 = collection.find_nearest(lat=-11.88000, lon=-76.05000, n=1)
+    assert (len(nearest1) == 1 and nearest1[0] == "SHULLCON")
+
+
+# test invalid inputs into the find_nearest method
+nearest_tests = [('1.1', 50.0, 5, TypeError),
+                 (1.1, '50.0', 5, TypeError),
+                 (1.1, 50.0, '5', TypeError),
+                 (-71832, 50.0, 5, ValueError),
+                 (1.1, 355.0, 5, ValueError),
+                 (1.1, 355.0, 9999999, ValueError),
+                 (1.1, 355.0, -10, ValueError)]
+
+
+@pytest.mark.parametrize("lat, lon, n, error", nearest_tests)
+def test_invalid_find_nearest(lat, lon, n, error):
+    file = Path('sheet-A.csv')
+    collection = GlacierCollection(file)
+    mb_file = Path('sheet-EE.csv')
+    collection.read_mass_balance_data(mb_file)
+
+    with raises(error) as exception:
+        collection.find_nearest(lat=lat, lon=lon, n=n)
+

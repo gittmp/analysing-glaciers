@@ -54,7 +54,7 @@ class Glacier:
 
     def add_mass_balance_measurement(self, year, mass_balance, partial):
         # check parameters
-        if not (type(year) == int or (type(year) == str and year.isnumeric())):
+        if not (type(year) == int or (type(year) == str and str(year).isnumeric())):
             raise TypeError("Year of mass-balance measurement not of supported type (integer or numeric string)")
 
         year = int(year)
@@ -175,8 +175,8 @@ class GlacierCollection:
 
     def read_mass_balance_data(self, file_path):
         # check parameters
-        if not (type(file_path) == PosixPath):
-            TypeError("File holding mass-balance data not specified as a Path object")
+        if type(file_path) != PosixPath:
+            raise TypeError("File holding mass-balance data not specified as a Path object")
 
         if not file_path.is_file():
             raise FileNotFoundError("Specified glacier mass-balance data file does not exist")
@@ -226,6 +226,8 @@ class GlacierCollection:
 
                 self.glaciers[gid].add_mass_balance_measurement(int(year), float(mass_balance), is_partial)
 
+        return True
+
     def find_nearest(self, lat, lon, n=5):
         """Get the n glaciers closest to the given coordinates."""
         # check parameters
@@ -243,6 +245,12 @@ class GlacierCollection:
 
         if type(n) != int:
             raise TypeError("The number of glaciers to return 'n' is not an integer")
+
+        if n < 0:
+            raise ValueError("The number of glaciers to return 'n' must be non-negative")
+
+        if len(self.glaciers.keys()) < n:
+            raise ValueError(f"There are not 'n={n}' glaciers in the dataset to return")
 
         # calculate nearest glaciers
         nearest = {}
