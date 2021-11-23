@@ -4,3 +4,4 @@ __pycache__
 assignment1.pdf
 *.png
 *.csv
+*.pyc

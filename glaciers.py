@@ -1,7 +1,8 @@
 import csv
 from datetime import datetime
-from pathlib import Path, PosixPath
+from pathlib import PosixPath
 from matplotlib import pyplot as plt
+from os.path import splitext
 from utils import haversine_distance
 
 
@@ -38,8 +39,11 @@ class Glacier:
         if not (-180 <= lon <= 180):
             raise ValueError("Invalid longitude of glacier given (should be in range -180 to 180)")
 
-        if not (type(code) == int and len(str(code)) == 3):
-            raise ValueError("The glacier type code is not a 3-digit integer")
+        if type(code) != int:
+            raise TypeError("The glacier type code must be an integer")
+
+        if len(str(code)) != 3:
+            raise ValueError("The glacier type code must be 3-digits")
 
         self.id = glacier_id
         self.name = name
@@ -106,6 +110,10 @@ class GlacierCollection:
         if not file_path.is_file():
             raise FileNotFoundError("Specified glacier data file does not exist")
 
+        _, extension = splitext(file_path)
+        if extension != '.csv':
+            raise ValueError(f"Glacier data file must be '.csv' not '{extension}'")
+
         # load glacier data from file
         with open(file_path, 'r') as file:
             file.seek(0)
@@ -164,12 +172,16 @@ class GlacierCollection:
             self.glaciers.update({gid: Glacier(gid, name, unit, lat, lon, code)})
 
     def read_mass_balance_data(self, file_path):
-        # check paramaters
+        # check parameters
         if not (type(file_path) == PosixPath):
             TypeError("File holding mass-balance data not specified as a Path object")
 
         if not file_path.is_file():
             raise FileNotFoundError("Specified glacier mass-balance data file does not exist")
+
+        _, extension = splitext(file_path)
+        if extension != '.csv':
+            raise ValueError(f"Glacier mass-balance file must be '.csv' not '{extension}'")
 
         # load mass balance data from file
         with open(file_path, 'r') as file:
@@ -399,17 +411,3 @@ class GlacierCollection:
         plot_axes.legend()
         plot.tight_layout()
         plot.savefig(output_path)
-
-
-# Test
-file_path = Path("sheet-A.csv")
-collection = GlacierCollection(file_path)
-mass_balance_file = Path("sheet-EE.csv")
-collection.read_mass_balance_data(mass_balance_file)
-collection.find_nearest(32.38517, 77.86855, n=5)
-collection.filter_by_code('555')
-collection.sort_by_latest_mass_balance()
-collection.sort_by_latest_mass_balance(reverse=True)
-collection.summary()
-plot_file = Path("figure.png")
-collection.plot_extremes(plot_file)
