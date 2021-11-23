@@ -161,7 +161,7 @@ def test_correct_glacier_plot():
     glacier.add_mass_balance_measurement(year=2020, mass_balance=-100, partial=False)
     glacier.add_mass_balance_measurement(year=2019, mass_balance=100, partial=False)
 
-    file = Path('./figure.png')
+    file = Path('./test_data/figure.png')
     glacier.plot_mass_balance(file)
 
     assert file.is_file()
@@ -177,7 +177,7 @@ def test_invalid_glacier_plot_inputs():
                       code=638)
 
     with raises(ValueError) as exception:
-        file = Path('./figure.png')
+        file = Path('./test_data/figure.png')
         glacier.plot_mass_balance(file)
 
     glacier.add_mass_balance_measurement(year=2021, mass_balance=-200, partial=False)
@@ -189,18 +189,18 @@ def test_invalid_glacier_plot_inputs():
 
 # test glacier construction on correct input
 def test_correct_collection_init():
-    file = Path('sheet-A.csv')
+    file = Path('test_data/sheet-A.csv')
     assert GlacierCollection(file)
 
 
 # invalid files input into the glacier collection constructor
 invalid_file_tests = [('nonpathfile.csv', TypeError),
                       (Path('doesntexist.csv'), FileNotFoundError),
-                      (Path('wrongextension.png'), ValueError),
-                      (Path('emptyfile.csv'), EOFError),
-                      (Path('invalid_latlon.csv'), ValueError),
-                      (Path('invalid_code.csv'), ValueError),
-                      (Path('duplicate_keys.csv'), KeyError)]
+                      (Path('test_data/wrongextension.png'), ValueError),
+                      (Path('test_data/emptyfile.csv'), EOFError),
+                      (Path('test_data/invalid_latlon.csv'), ValueError),
+                      (Path('test_data/invalid_code.csv'), ValueError),
+                      (Path('test_data/duplicate_keys.csv'), KeyError)]
 
 
 @pytest.mark.parametrize("file, error", invalid_file_tests)
@@ -211,23 +211,23 @@ def test_invalid_glacier_file(file, error):
 
 # test reading in a correct mass-balance data file
 def test_correct_mass_balance_file():
-    file = Path('sheet-A.csv')
+    file = Path('test_data/sheet-A.csv')
     collection = GlacierCollection(file)
-    mb_file = Path('sheet-EE.csv')
+    mb_file = Path('test_data/sheet-EE.csv')
     assert collection.read_mass_balance_data(mb_file)
 
 
 # test invalid inputs into mass-balance reading method
 mb_file_tests = [('nonpathfile.csv', TypeError),
-                (Path('doesntexist.csv'), FileNotFoundError),
-                (Path('wrongextension.png'), ValueError),
-                (Path('emptyfile.csv'), EOFError),
-                (Path('invalid_id.csv'), KeyError)]
+                 (Path('doesntexist.csv'), FileNotFoundError),
+                 (Path('test_data/wrongextension.png'), ValueError),
+                 (Path('test_data/emptyfile.csv'), EOFError),
+                 (Path('test_data/invalid_id.csv'), KeyError)]
 
 
 @pytest.mark.parametrize("mb_file, error", mb_file_tests)
 def test_no_mass_balance_file(mb_file, error):
-    file = Path('sheet-A.csv')
+    file = Path('test_data/sheet-A.csv')
     collection = GlacierCollection(file)
 
     with raises(error) as exception:
@@ -236,9 +236,9 @@ def test_no_mass_balance_file(mb_file, error):
 
 # test if find_nearest method works correctly on valid input
 def test_correct_find_nearest():
-    file = Path('sheet-A.csv')
+    file = Path('test_data/sheet-A.csv')
     collection = GlacierCollection(file)
-    mb_file = Path('sheet-EE.csv')
+    mb_file = Path('test_data/sheet-EE.csv')
     collection.read_mass_balance_data(mb_file)
 
     nearest10 = collection.find_nearest(lat=-46.65000, lon=-73.18000, n=10)
@@ -260,9 +260,9 @@ nearest_tests = [('1.1', 50.0, 5, TypeError),
 
 @pytest.mark.parametrize("lat, lon, n, error", nearest_tests)
 def test_invalid_find_nearest(lat, lon, n, error):
-    file = Path('sheet-A.csv')
+    file = Path('test_data/sheet-A.csv')
     collection = GlacierCollection(file)
-    mb_file = Path('sheet-EE.csv')
+    mb_file = Path('test_data/sheet-EE.csv')
     collection.read_mass_balance_data(mb_file)
 
     with raises(error) as exception:
@@ -271,9 +271,9 @@ def test_invalid_find_nearest(lat, lon, n, error):
 
 # test filter method on correct valid input
 def test_correct_filter():
-    file = Path('sheet-A.csv')
+    file = Path('test_data/sheet-A.csv')
     collection = GlacierCollection(file)
-    mb_file = Path('sheet-EE.csv')
+    mb_file = Path('test_data/sheet-EE.csv')
     collection.read_mass_balance_data(mb_file)
 
     res1 = collection.filter_by_code("638")
@@ -301,9 +301,9 @@ invalid_filter_tests = [(10.1, TypeError),
 
 @pytest.mark.parametrize("filter, error", invalid_filter_tests)
 def test_invalid_find_nearest(filter, error):
-    file = Path('sheet-A.csv')
+    file = Path('test_data/sheet-A.csv')
     collection = GlacierCollection(file)
-    mb_file = Path('sheet-EE.csv')
+    mb_file = Path('test_data/sheet-EE.csv')
     collection.read_mass_balance_data(mb_file)
 
     with raises(error) as exception:
@@ -312,9 +312,9 @@ def test_invalid_find_nearest(filter, error):
 
 # test collection method sort_by_latest_mass_balance on valid inputs
 def test_correct_sort():
-    file = Path('sheet-A.csv')
+    file = Path('test_data/sheet-A.csv')
     collection = GlacierCollection(file)
-    mb_file = Path('sort_test_values.csv')
+    mb_file = Path('test_data/sort_test_values.csv')
     collection.read_mass_balance_data(mb_file)
 
     res1 = collection.sort_by_latest_mass_balance(n=1, reverse=True)
@@ -331,15 +331,15 @@ def test_correct_sort():
 
 
 # test sort_by_latest_mass_balance for invalid inputs
-invalid_sort_tests = [(TypeError, '66', False, 'sort_test_values.csv'),
-                      (TypeError, 10, 'not true', 'sort_test_values.csv'),
-                      (ValueError, -200, True, 'sort_test_values.csv'),
-                      (ValueError, 10, False, 'sort_empty_values.csv')]
+invalid_sort_tests = [(TypeError, '66', False, 'test_data/sort_test_values.csv'),
+                      (TypeError, 10, 'not true', 'test_data/sort_test_values.csv'),
+                      (ValueError, -200, True, 'test_data/sort_test_values.csv'),
+                      (ValueError, 10, False, 'test_data/sort_empty_values.csv')]
 
 
 @pytest.mark.parametrize("error, n, reverse, data", invalid_sort_tests)
 def test_invalid_sort(error, n, reverse, data):
-    file = Path('sheet-A.csv')
+    file = Path('test_data/sheet-A.csv')
     collection = GlacierCollection(file)
     mb_file = Path(data)
     collection.read_mass_balance_data(mb_file)
@@ -350,9 +350,9 @@ def test_invalid_sort(error, n, reverse, data):
 
 # test summary method on correct valid data
 def test_valid_summary():
-    file = Path('sheet-A.csv')
+    file = Path('test_data/sheet-A.csv')
     collection = GlacierCollection(file)
-    mb_file = Path('sheet-EE.csv')
+    mb_file = Path('test_data/sheet-EE.csv')
     collection.read_mass_balance_data(mb_file)
 
     assert collection.summary()
@@ -360,7 +360,7 @@ def test_valid_summary():
 
 # test summary method on invalid data
 def test_invalid_summary():
-    file = Path('sheet-A.csv')
+    file = Path('test_data/sheet-A.csv')
     collection = GlacierCollection(file)
 
     with raises(ZeroDivisionError) as exception:
@@ -369,26 +369,26 @@ def test_invalid_summary():
 
 # test collections method to plot extremes works for correct data/inputs
 def test_extremes_plot():
-    file = Path('sheet-A.csv')
+    file = Path('test_data/sheet-A.csv')
     collection = GlacierCollection(file)
-    mb_file = Path('sheet-EE.csv')
+    mb_file = Path('test_data/sheet-EE.csv')
     collection.read_mass_balance_data(mb_file)
 
-    fig = Path('./extremes_figure.png')
+    fig = Path('./test_data/extremes_figure.png')
     collection.plot_extremes(fig)
 
     assert fig.is_file()
 
 
 # test plot extremes method on invalid data
-invalid_extremes_tests = [(TypeError, 'nonpathfile.png', 'sheet-EE.csv'),
-                          (ValueError, Path('figure.png'), 'extremes1.csv'),
-                          (ValueError, Path('figure.png'), 'extremes2.csv')]
+invalid_extremes_tests = [(TypeError, 'nonpathfile.png', 'test_data/sheet-EE.csv'),
+                          (ValueError, Path('figure.png'), 'test_data/extremes1.csv'),
+                          (ValueError, Path('figure.png'), 'test_data/extremes2.csv')]
 
 
 @pytest.mark.parametrize("error, plot_file, data", invalid_extremes_tests)
 def test_invalid_plot_extremes(error, plot_file, data):
-    file = Path('sheet-A.csv')
+    file = Path('test_data/sheet-A.csv')
     collection = GlacierCollection(file)
     mb_file = Path(data)
     collection.read_mass_balance_data(mb_file)

@@ -1,6 +1,8 @@
 .DS_Store
 .idea
 __pycache__
+.pytest_cache
+test_data
 assignment1.pdf
 *.png
 *.csv
