@@ -1,9 +1,9 @@
 # Studying Glaciers: Reading and analysing historical datasets
 
-
-Your lab members are looking into historical measurements of glacier size. They have asked you to write some code to make it easier to load the data and perform some basic analyses.
+This project investigates historical measurements of glacier size, implementing code to make it easier to load glacier data and perform analyses.
 
 ## Glacier information
+
 For each glacier, we record some basic pieces of information:
 - its name
 - a unique identifier (ID) for referring to it
@@ -14,6 +14,7 @@ For each glacier, we record some basic pieces of information:
 Additionally, we care about how the “health” of the glacier changes over time. Glaciers can grow and decrease in size. This is measured through a quantity called mass-balance. In its simplest form, it is a single number which measures the net growth or loss in a given time period. If it is positive, it means that the glacier has grown. If it is negative, it has shrunk.
 
 ## Structure of the data
+
 The data you are working has been compiled over a number of years. It is split across multiple files in CSV format. For the purposes of the project, we will look at two files, `sheet-A.csv` and `sheet-EE.csv`.
 
 The first file (`sheet-A.csv`) has the basic information for each glacier. It contains one row per glacier. The of interest columns are, in order:
@@ -75,7 +76,6 @@ The summary method should compute and display the following:
 - number of glaciers in the collection
 - earliest year of recorded mass-balance change (for any single glacier)
 - percentage of the glaciers that shrunk at their last measurement, rounded to the nearest integer
-
 
 ### Plotting
 
