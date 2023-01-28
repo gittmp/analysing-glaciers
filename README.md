@@ -8,7 +8,8 @@ For each glacier, we record some basic pieces of information:
 - its name
 - a unique identifier (ID) for referring to it
 - the country or other political unit it belongs to
-- its type, composed of three aspects (primary classification, form, frontal characteristics) • its location (latitude and longitude)
+- its type, composed of three aspects (primary classification, form, frontal characteristics)
+- its location (latitude and longitude)
 
 Additionally, we care about how the “health” of the glacier changes over time. Glaciers can grow and decrease in size. This is measured through a quantity called mass-balance. In its simplest form, it is a single number which measures the net growth or loss in a given time period. If it is positive, it means that the glacier has grown. If it is negative, it has shrunk.
 
@@ -45,30 +46,30 @@ Paul, and Martin Hoelzle, eds. 2021. Global Glacier Change Bulletin No. 4 (2018-
 
 The implemented projram reads in, validates, and analyses this data.
 
-The code is split over two files. glaciers.py contains the definition of two classes, Glacier and GlacierCollection. The first represents a single glacier, while the second brings together all the glaciers from a dataset. The second file, utilities.py, is a place to put useful functions.
+The code is split over two files. `glaciers.py` contains the definition of two classes, `Glacier` and `GlacierCollection`. The first represents a single glacier, while the second brings together all the glaciers from a dataset. The second file, `utilities.py`, is a place to put useful functions.
 
-Users can create Glacier objects and call methods on them. However, the user will likely interact primarily through the GlacierCollection, by creating it, adding data and retrieving some analysis results.
+Users can create `Glacier` objects and call methods on them. However, the user will likely interact primarily through the `GlacierCollection`, by creating it, adding data and retrieving some analysis results.
 
 ### Reading in data
 
-To create a Glacier object, one must know some basic properties: its unique identifier, name, political unit, coordinates, and the 3-digit code describing its type. These are passed to the class’s constructor: `my_glacier = Glacier(”01657”, ”DE LOS TRES”, ”AR”, -49.33, -73.0, 544)`
+To create a `Glacier` object, one must know some basic properties: its unique identifier, name, political unit, coordinates, and the 3-digit code describing its type. These are passed to the class’s constructor: `my_glacier = Glacier(”01657”, ”DE LOS TRES”, ”AR”, -49.33, -73.0, 544)`
 
-Alternatively, users can create an entire collection by passing in the file containing basic information (`sheet-A.csv`). The argument to the constructor should be a Path object from Python’s pathlib module. For example: 
+Alternatively, users can create an entire collection by passing in the file containing basic information (`sheet-A.csv`). The argument to the constructor should be a `Path` object from Python’s `pathlib` module. For example: 
 `
 from pathlib import Path
 file_path = Path(”../sheet-A.csv”)
 collection = GlacierCollection(file_path)
 `
 
-Once the GlacierCollection is available, it should be possible to read in the mass-balance data through its read_mass_balance_data method, which should take as input another Path object pointing to the relevant sheet. This method should, in turn, call the add_mass_balance_measurement method of Glacier, which takes 3 arguments: the year, the value, and a boolean value indicating whether this is a partial (sub-region) measurement or not.
+Once the `GlacierCollection` is available, it should be possible to read in the mass-balance data through its `read_mass_balance_data` method, which should take as input another `Path` object pointing to the relevant sheet. This method should, in turn, call the `add_mass_balance_measurement` method of `Glacier`, which takes 3 arguments: the year, the value, and a boolean value indicating whether this is a partial (sub-region) measurement or not.
 
 ### Analysis
 
-Given a GlacierCollection object, the filter_by_code method should take a 3-digit code as an integer or string, and return the names of all the glaciers with that code. For more flexibility, we may want to match several codes at once. To do this, the method should allow matching an incomplete code using the character ?. For example, if we want to find glaciers with codes where the first digit is 4 and the third digit is 9, but the second digit could be anything, we should be able to pass in the argument ”4?9”.
+Given a `GlacierCollection` object, the `filter_by_code` method should take a 3-digit code as an integer or string, and return the names of all the glaciers with that code. For more flexibility, we may want to match several codes at once. To do this, the method should allow matching an incomplete code using the character "?". For example, if we want to find glaciers with codes where the first digit is 4 and the third digit is 9, but the second digit could be anything, we should be able to pass in the argument "4?9".
 
-The find_nearest method should take as arguments a latitude, a longitude, and a number of results n, and return a list of the names of the n glaciers which are closest to those coordinates.
+The `find_nearest` method should take as arguments a latitude, a longitude, and a number of results "n", and return a list of the names of the "n" glaciers which are closest to those coordinates.
 
-The sort_by_latest_mass_balance method should accept an optional argument n (default: 5) and return a list of n Glacier objects, representing the glaciers with the greatest change in mass-balance at the time they were last recorded (the year of those measurements may differ across the glaciers).
+The `sort_by_latest_mass_balance` method should accept an optional argument "n" (default: 5) and return a list of "n" `Glacier` objects, representing the glaciers with the greatest change in mass-balance at the time they were last recorded (the year of those measurements may differ across the glaciers).
 
 The summary method should compute and display the following:
 - number of glaciers in the collection
@@ -78,12 +79,8 @@ The summary method should compute and display the following:
 
 ### Plotting
 
-Glacier objects also have a plot_mass_balance which plots the mass balance measurements on the Y-axis against the years the measurements were taken on the X-axis.
+`Glacier` objects also have a `plot_mass_balance` which plots the mass balance measurements on the Y-axis against the years the measurements were taken on the X-axis.
 
-GlacierCollection objects also have a visualisation method called plot_extremes. This method should plot the mass balance measurements against the years for the two extreme glaciers in the collection.
+`GlacierCollection` objects also have a visualisation method called `plot_extremes`. This method should plot the mass balance measurements against the years for the two extreme glaciers in the collection.
 
-Both plotting methods should also label the axes appropriately and save the plot to a file. They should therefore take a file path (a Path object, as above) as an argument.
-
-
-
-
+Both plotting methods should also label the axes appropriately and save the plot to a file. They should therefore take a file path (a `Path` object, as above) as an argument.
